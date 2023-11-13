@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button id="shareSessionBtn">Share Session</button>
+  <div id="viewers"></div>
+  <video src="http://localhost:8080/media" controls></video>
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+  <script>
+    const socket = io()
+    const sessionId = new Date().getTime()
+    shareSessionBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(`http://localhost:8080/device?sessionId=${sessionId}`)
+    })
+
+    socket.on('viewer-joined', ({ language }) => {
+      const element = document.createElement('p')
+      const el = document.getElementById('viewers')
+      element.innerHTML = `viewer # ${viewers.children.length}: ${language}`
+
+      viewers.appendChild(element)
+    })
+  </script>
+</body>
+</html>
