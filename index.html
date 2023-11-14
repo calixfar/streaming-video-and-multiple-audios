@@ -10,18 +10,20 @@
   <button id="shareSessionBtn">Share Session</button>
   <div id="viewers"></div>
   <video src="http://localhost:8080/media" controls></video>
-  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io()
-    const sessionId = new Date().getTime()
+    const sessionId = new Date().getTime().toString()
     shareSessionBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(`http://localhost:8080/device?sessionId=${sessionId}`)
+      navigator.clipboard.writeText(`http://localhost:8080/device?sessionId=${sessionId}&languages=EN,ES,FR`)
     })
+
+    socket.emit('create-session', { sessionId })
 
     socket.on('viewer-joined', ({ language }) => {
       const element = document.createElement('p')
       const el = document.getElementById('viewers')
-      element.innerHTML = `viewer # ${viewers.children.length}: ${language}`
+      element.innerHTML = `viewer # ${viewers.children.length + 1 }: ${language}`
 
       viewers.appendChild(element)
     })

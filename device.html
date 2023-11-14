@@ -6,16 +6,47 @@
   <title>Document</title>
 </head>
 <body>
+  <div id="formSelectLanguage" />
   <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
   <script>
     const socket = io()
-    const sessionId = new URL(location.href).searchParams.get('sessionId')
+    const { searchParams } = new URL(location.href)
 
-    if (!sessionId) {
-      return
+    const sessionId = searchParams.get('sessionId')
+    const languages = searchParams.get('languages')
+
+    if (sessionId && languages) {
+      const select = document.createElement('select')
+      const arrLanguages = languages.split(',')
+      arrLanguages.unshift('')
+
+      arrLanguages.forEach((language, index) => {
+        const option = document.createElement('option')
+        option.value = language
+
+        if (index === 0) {
+          option.defaultSelected = true
+          option.disabled = true
+          option.innerHTML = 'Select your language'
+        } else {
+          option.innerHTML = language
+        }
+
+        select.appendChild(option)
+      })
+
+      select.onchange = (event) => {
+        socket.emit('join-session', { sessionId, language: event.target.value })
+      }
+
+      formSelectLanguage.appendChild(select)
+      
     }
 
-    socket.emit('join-session', { sessionId })
+    // if (sessionId && languages) {
+    //   
+    // }
+
   </script>
 </body>
 </html>

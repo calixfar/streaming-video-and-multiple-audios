@@ -47,6 +47,7 @@ app.get('/media', function(req, res) {
 
 io.on('connection', (socket) => {
   socket.on('create-session', ({ sessionId, language = 'DEFAULT'}) => {
+    console.log('get in create')
     socket.join(sessionId)
 
     userJoin({ sessionId, socketId: socket.id, language, type: 'OWNER' })
