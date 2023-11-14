@@ -14,11 +14,13 @@
   <script>
     const socket = io()
     const sessionId = new Date().getTime().toString()
+    const userId = new Date().getTime().toString()
+
     shareSessionBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(`http://localhost:8080/device?sessionId=${sessionId}&languages=EN,ES,FR`)
     })
 
-    socket.emit('create-session', { sessionId })
+    socket.emit('create-session', { sessionId, userId })
 
     socket.on('viewer-joined', ({ language }) => {
       const element = document.createElement('p')
@@ -26,6 +28,10 @@
       element.innerHTML = `viewer # ${viewers.children.length + 1 }: ${language}`
 
       viewers.appendChild(element)
+    })
+
+    socket.on('viewer-disconnected', ({ userId }) => {
+      alert(`Viewer ${userId} has disconnected`)
     })
   </script>
 </body>

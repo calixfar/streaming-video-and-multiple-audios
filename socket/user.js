@@ -1,17 +1,24 @@
-const users = []
+let users = []
 
 const userJoin = (user) => {
   users.push(user)
 }
 
-const getSessionOwner = (sessionId) =>
+const getSessionOwnerBySessionId = (sessionId) =>
   users.find(user => user.sessionId === sessionId && user.type === 'OWNER')
 
 const getUserBySocketId = (socketId) =>
   users.find(user => user.socketId === socketId)
 
+const removeUsersByPropertyAndValue = (property, id) => {
+  users = users.filter(user => user[property] != id)
+
+  console.log(users)
+}
+
 module.exports = {
   userJoin,
-  getSessionOwner,
-  getUserBySocketId
+  getSessionOwnerBySessionId,
+  getUserBySocketId,
+  removeUsersByPropertyAndValue
 }

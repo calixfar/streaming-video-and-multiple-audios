@@ -4,7 +4,9 @@ const express = require("express")
 const socketio = require("socket.io")
 const { 
   userJoin,
-  getSessionOwner
+  getSessionOwnerBySessionId,
+  getUserBySocketId,
+  removeUsersByPropertyAndValue
 } = require('./socket/user')
 
 const app = express()
@@ -46,24 +48,43 @@ app.get('/media', function(req, res) {
 })
 
 io.on('connection', (socket) => {
-  socket.on('create-session', ({ sessionId, language = 'DEFAULT'}) => {
+  socket.on('create-session', ({ sessionId, language = 'DEFAULT', userId }) => {
     console.log('get in create')
     socket.join(sessionId)
 
-    userJoin({ sessionId, socketId: socket.id, language, type: 'OWNER' })
+    userJoin({ sessionId, socketId: socket.id, userId, language, type: 'OWNER' })
   })
 
-  socket.on('join-session', ({ sessionId, language }) => {
-    const sessionOwner = getSessionOwner(sessionId)
+  socket.on('join-session', ({ sessionId, language, userId }) => {
+    const sessionOwner = getSessionOwnerBySessionId(sessionId)
     if (!sessionOwner) {
       return
     }
 
     socket.join(sessionId)
 
-    userJoin({ sessionId, socketId: socket.id, language, type: 'VIEWER' })
+    userJoin({ sessionId, socketId: socket.id, userId, language, type: 'VIEWER' })
 
-    io.to(sessionOwner.socketId).emit('viewer-joined', { language })
+    io.to(sessionOwner.socketId).emit('viewer-joined', { language, userId })
+  })
+
+  socket.on('disconnect', () => {
+    const user = getUserBySocketId(socket.id)
+
+    if (!user) {
+      return
+    }
+
+    if (user.type === 'OWNER') {
+      socket.broadcast.to(user.sessionId).emit('session-ended')
+      removeUsersByPropertyAndValue('sessionId', user.sessionId)
+
+    } else {
+      const sessionOwner = getSessionOwnerBySessionId(user.sessionId)
+
+      io.to(sessionOwner.socketId).emit('viewer-disconnected', { userId: user.userId })
+      removeUsersByPropertyAndValue('userId', user.userId)
+    }
   })
 })
 

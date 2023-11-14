@@ -10,6 +10,7 @@
   <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
   <script>
     const socket = io()
+    const userId = new Date().getTime().toString()
     const { searchParams } = new URL(location.href)
 
     const sessionId = searchParams.get('sessionId')
@@ -36,16 +37,16 @@
       })
 
       select.onchange = (event) => {
-        socket.emit('join-session', { sessionId, language: event.target.value })
+        socket.emit('join-session', { sessionId, userId, language: event.target.value })
       }
 
       formSelectLanguage.appendChild(select)
+
+      socket.on('session-ended' , () => {
+        alert("The owner has ended the session")
+      })
       
     }
-
-    // if (sessionId && languages) {
-    //   
-    // }
 
   </script>
 </body>
