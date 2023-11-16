@@ -48,8 +48,14 @@ app.get('/media', function(req, res) {
   streamMedia(req, res, './assets/video.mp4')
 })
 
-app.get('/audio/:language', function(req, res) {
-  streamMedia(req, res, `./assets/audio-${language}.mp3`)
+app.get('/audio', function(req, res) {
+  const { language, media } = req.query
+
+  if(!language || !media) {
+    return
+  }
+
+  streamMedia(req, res, `./assets/${media}-${language}.mp3`)
 }) 
 
 io.on('connection', (socket) => {
@@ -70,6 +76,16 @@ io.on('connection', (socket) => {
     userJoin({ sessionId, socketId: socket.id, userId, language, type: 'VIEWER' })
 
     io.to(sessionOwner.socketId).emit('viewer-joined', { language, userId })
+  })
+
+  socket.on('control-media', ({ action }) => {
+    const user = getUserBySocketId(socket.id)
+
+    if (!user) {
+      return
+    }
+
+    socket.broadcast.to(user.sessionId).emit(`${action}-media`)
   })
 
   socket.on('disconnect', () => {

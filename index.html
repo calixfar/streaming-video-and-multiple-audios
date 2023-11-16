@@ -5,11 +5,28 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #videoContainer {
+      display: flex;
+      align-items: center;
+    }
+
+    main {
+      width: 90%;
+      max-width: 1024px;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
-  <button id="shareSessionBtn">Share Session</button>
-  <div id="viewersContainer"></div>
-  <video src="http://localhost:8080/media" controls></video>
+  <main>
+    <div id="videoContainer" class="mb-2">
+      <video id="video" src="http://localhost:8080/media" controls></video>
+    </div>
+    <button id="shareSessionBtn" class="rounded-full bg-zinc-900 hover:bg-zinc-600 text-white bold py-2 px-3">Share Session</button>
+    <div id="viewersContainer" class="mt-3"></div>
+  </main>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io()
@@ -18,11 +35,17 @@
     let viewers = []
 
     shareSessionBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(`http://localhost:8080/device?sessionId=${sessionId}&languages=EN,ES,FR`)
+      navigator.clipboard.writeText(`http://localhost:8080/device?sessionId=${sessionId}&media=video&languages=EN,ES,FR`)
     })
 
     function renderViewers () {
       viewersContainer.innerHTML = ''
+
+      const viewersTitle = document.createElement('h1')
+      viewersTitle.innerHTML = 'Joined viewers'
+      viewersTitle.className = 'text-xl bold mb-2'
+
+      viewersContainer.appendChild(viewersTitle)
 
       viewers.forEach((viewer, index) => {
         const element = document.createElement('p')
@@ -43,7 +66,18 @@
     socket.on('viewer-disconnected', ({ userId }) => {
       viewers = viewers.filter((viewer) => viewer.userId !== userId)
       renderViewers()
-      console.log({viewers})
+    })
+
+    function emitControlMediaEvent (action) {
+      socket.emit('control-media', { action })
+    }
+
+    video.addEventListener('play', () => {
+      emitControlMediaEvent('play')
+    })
+
+    video.addEventListener('pause', () => {
+      emitControlMediaEvent('pause')
     })
   </script>
 </body>

@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-  <div id="formSelectLanguage" />
+  <div id="formSelectLanguage"></div>
+  <div id="audioContainer"></div>
   <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
   <script>
     const socket = io()
@@ -15,8 +17,9 @@
 
     const sessionId = searchParams.get('sessionId')
     const languages = searchParams.get('languages')
+    const media = searchParams.get('media')
 
-    if (sessionId && languages) {
+    if (sessionId && languages && media) {
       const select = document.createElement('select')
       const arrLanguages = languages.split(',')
       arrLanguages.unshift('')
@@ -35,15 +38,48 @@
 
         select.appendChild(option)
       })
+      
+      function showAudioElement (language) {
+        const audio = document.createElement('audio')
+
+        audio.id = 'audio'
+        audio.src = `http://localhost:8080/audio?media=${media}&language=${language.toLowerCase()}`
+        audio.controls = true
+
+        audioContainer.appendChild(audio)
+      }
 
       select.onchange = (event) => {
-        socket.emit('join-session', { sessionId, userId, language: event.target.value })
+        const { value: language } = event.target
+        
+        socket.emit('join-session', { sessionId, userId, language })
+
+        showAudioElement(language)
+        formSelectLanguage.style.display = 'none'
       }
 
       formSelectLanguage.appendChild(select)
 
+      function controlAudio(action) {
+        const audio = document.getElementById('audio')
+
+        if (!audio) {
+          return
+        }
+
+        audio[action]()
+      }
+
       socket.on('session-ended' , () => {
         alert("The owner has ended the session")
+      })
+
+      socket.on('play-media', () => {
+        controlAudio('play')
+      })
+
+      socket.on('pause-media', () => {
+        controlAudio('pause')
       })
       
     }
