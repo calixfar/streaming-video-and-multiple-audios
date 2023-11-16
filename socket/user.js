@@ -12,8 +12,6 @@ const getUserBySocketId = (socketId) =>
 
 const removeUsersByPropertyAndValue = (property, id) => {
   users = users.filter(user => user[property] != id)
-
-  console.log(users)
 }
 
 module.exports = {

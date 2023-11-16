@@ -8,30 +8,31 @@ const {
   getUserBySocketId,
   removeUsersByPropertyAndValue
 } = require('./socket/user')
+const {
+  getContentRange,
+  getMediaStreamHeaders,
+  getFileTypeByExtension
+} = require('./utils/media-mananger')
 
 const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
 
-function streamMedia (req, res) {
-  const range = req.headers.range || "0"
-  const videoPath = "./assets/test.mp4"
-  const videoSize = fs.statSync(videoPath).size
-  const chunkSize = 1 * 1e6  //  1MB
-  const start = Number(range.replace(/\D/g, ""))
-  const end = Math.min(start + chunkSize, videoSize - 1)
+function streamMedia (req, res, filePath) {
+  const range = req.headers.range || '0'
 
-  const contentLength = end - start + 1
+  const contentRange = getContentRange({ filePath, range })
+  
+  res.writeHead(206, getMediaStreamHeaders({...contentRange, fileType: getFileTypeByExtension(filePath)}))
 
-  const headers = {
-    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-    "Accept-Ranges": "bytes",
-    "Content-Length": contentLength,
-    "Content-Type": "video/mp4",
-  }
-  res.writeHead(206, headers)
+  const stream = fs.createReadStream(
+    filePath, 
+    { 
+      start: contentRange.start, 
+      end : contentRange.end
+    }
+  )
 
-  const stream = fs.createReadStream(videoPath, { start, end })
   stream.pipe(res)
 }
 
@@ -44,12 +45,15 @@ app.get('/device', function(req, res) {
 })
 
 app.get('/media', function(req, res) {
-  streamMedia(req, res)
+  streamMedia(req, res, './assets/video.mp4')
 })
+
+app.get('/audio/:language', function(req, res) {
+  streamMedia(req, res, `./assets/audio-${language}.mp3`)
+}) 
 
 io.on('connection', (socket) => {
   socket.on('create-session', ({ sessionId, language = 'DEFAULT', userId }) => {
-    console.log('get in create')
     socket.join(sessionId)
 
     userJoin({ sessionId, socketId: socket.id, userId, language, type: 'OWNER' })
